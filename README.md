@@ -16,6 +16,7 @@ pip3 install tqdm celery numpy pyelftools
 Setup celery worker in Instruction Stomp Directory:
 
 ```bash
+# python3 -m celery -A lib.celery_tasks worker --loglevel=info
 celery -A lib.celery_tasks worker --loglevel=info
 ```
 
