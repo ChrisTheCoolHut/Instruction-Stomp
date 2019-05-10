@@ -8,7 +8,7 @@ Another instruction counting tool. This one uses QEMU and celery to count instru
 
 ```
 sudo apt install qemu-user rabbitmq-server
-pip install tqdm celery numpy pyelftools
+pip3 install tqdm celery numpy pyelftools
 ```
 ## Usage
 Setup celery worker in Instruction Stomp Directory:
@@ -18,7 +18,7 @@ celery -A lib.celery_tasks worker --loglevel=info
 ```
 
 ``` bash
-$ python InstStomp.py -h
+$ python3 InstStomp.py -h
 usage: InstStomp.py [-h] (--stdin | --arg) [-i INPUTLENGTH] [-r] [-g]
                     [-c INPUTCHECKCOUNT]
                     File
@@ -41,7 +41,7 @@ optional arguments:
 ## Examples
 Get user input length:
 ```bash
-$ python InstStomp.py -g -c 30  --stdin challenges/wyvern_c85f1be480808a9da350faaa6104a19b 
+$ python3 InstStomp.py -g -c 30  --stdin challenges/wyvern_c85f1be480808a9da350faaa6104a19b 
 [~] Running input length check:  67%|██████████████████████████████████████                   | 20/30 [00:03<00:01,  6.31it/s]
 [[0, 337770], [1, 337562], [2, 337823], [3, 337823], [4, 337821], [5, 337821], [6, 337821], [7, 337821], [8, 337820], [9, 337820], [10, 337820], [11, 337820], [12, 337820], [13, 337820], [14, 337820], [15, 337820], [16, 337822], [17, 337826], [18, 337826], [19, 337826], [20, 337826], [21, 337826], [22, 337826], [23, 337826], [24, 337826], [25, 337826], [26, 337826], [27, 337826], [28, 337826], [29, 339147]]
 Input Length: 29
