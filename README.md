@@ -8,7 +8,7 @@ Another instruction counting tool. This one uses QEMU and celery to count instru
 
 ```
 sudo apt install qemu-user rabbitmq-server
-pip install tqdm celery
+pip install tqdm celery numpy pyelftools
 ```
 ## Usage
 Setup celery worker in Instruction Stomp Directory:
