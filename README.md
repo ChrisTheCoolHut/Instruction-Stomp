@@ -7,7 +7,7 @@ Another instruction counting tool. This one uses QEMU and celery to count instru
 ## Install
 
 ```
-sudo apt install qemu-user
+sudo apt install qemu-user rabbitmq-server
 pip install tqdm celery
 ```
 ## Usage
