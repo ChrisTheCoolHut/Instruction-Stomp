@@ -6,6 +6,8 @@ Another instruction counting tool. This one uses QEMU and celery to count instru
 
 ## Install
 
+This project uses python3
+
 ```
 sudo apt install qemu-user rabbitmq-server
 pip3 install tqdm celery numpy pyelftools
