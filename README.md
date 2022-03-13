@@ -22,8 +22,8 @@ celery -A lib.celery_tasks worker --loglevel=info
 
 ``` bash
 $ python3 InstStomp.py -h
-usage: InstStomp.py [-h] (--stdin | --arg) [-i INPUTLENGTH] [-r] [-g]
-                    [-c INPUTCHECKCOUNT]
+usage: InstStomp.py [-h] (--stdin | --arg) [-i INPUTLENGTH] [-r] [-g] [-c INPUTCHECKCOUNT]
+                    [--exec] [-v] [--curr CURR] [--curr_iter CURR_ITER]
                     File
 
 positional arguments:
@@ -39,6 +39,11 @@ optional arguments:
   -g, --getLength       Get input length
   -c INPUTCHECKCOUNT, --inputCheckCount INPUTCHECKCOUNT
                         How much length to check
+  --exec                Use exec qemu mode
+  -v, --verbose         enable debug output
+  --curr CURR           Current input to start with
+  --curr_iter CURR_ITER
+                        Skip to this value
 ```
 
 ## Examples
