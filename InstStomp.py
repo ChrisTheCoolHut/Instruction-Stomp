@@ -10,7 +10,6 @@ import os
 from operator import itemgetter 
 
 
-
 qemu_match = {
         'arm' : 'qemu-arm',
         'armeb' : 'qemu-armeb',
@@ -51,14 +50,15 @@ def make_input_file(file_name, contents):
     with open(file_name, 'w') as f:
         f.write(contents)
 
-def do_run(position, user_input, qemu_binary, binary, use_stdin=True):
+def do_run(position, user_input, qemu_binary, binary, use_stdin=True, in_asm_mode=True):
     async_group = []
-    for x in string.printable:
+    for x in range(0x21,0x7E):
+        x = chr(x)
         input_test = mod_input(user_input, position, x)
         async_group.append(
                 run_qemu_command.delay(
                     qemu_binary, input_test,
-                    binary, x, use_stdin))
+                    binary, x, use_stdin, in_asm_mode))
 
     bar = tqdm.tqdm(total=len(async_group), desc="[~] Running on position {}".format(position))
     while not all([x.ready() for x in async_group]):
@@ -69,28 +69,79 @@ def do_run(position, user_input, qemu_binary, binary, use_stdin=True):
 
     return [x.get(propagate=False) for x in async_group if not x.failed()]
 
-def solve_ins_count(file_name, input_length, input_rev, input_stdin):
+def solve_ins_count(args):
+
+    # solve_ins_count(args.File, args.inputLength, args.reverse, args.stdin)
+    file_name = args.File
+    input_length = args.inputLength
+    input_rev = args.reverse
+    input_stdin = args.stdin
 
     starting_input = "A"*input_length
-    run_dict = {}
+    if args.curr:
+        starting_input = args.curr
     my_r = range(input_length)
     if input_rev:
          my_r = reversed(my_r)
+
+    if args.curr_iter:
+        my_r = my_r[args.curr_iter:]
 
     arch, is_little_endian= get_file_arch(file_name)
     qemu_binary = get_qemu_binary(arch, is_little_endian)
     file_name = os.path.abspath(file_name)
 
-
+ 
     modified_input = starting_input
+    if not args.exec:
+        # First try qemu in_asm method
+        for val in my_r:
+
+            results = do_run(val, modified_input, qemu_binary, file_name, input_stdin, True)
+
+            if args.verbose:
+                for res in results:
+                    print("{} : {}".format(res[0],res[1]))
+        
+            # Are all the lengths the same?
+            ins_counts = [x[1] for x in results]
+            if ins_counts.count(ins_counts[0]) == len(ins_counts):
+                print("All ins counts are equal")
+                break
+
+            mod_char = max(results,key=itemgetter(1))[0]
+            if args.verbose:
+                print("Choosing : {} : {}".format(mod_char, val))
+            modified_input = mod_input(modified_input, val,  mod_char)
+            print(modified_input)
+    
+    modified_input = starting_input
+    # Then try qemu exec method
     for val in my_r:
 
-        results = do_run(val, modified_input, qemu_binary, file_name, input_stdin)
+        results = do_run(val, modified_input, qemu_binary, file_name, input_stdin, False)
+        
+        if args.verbose:
+            for res in results:
+                print("{} : {}".format(res[0],res[1]))
+
+        # Are all the lengths the same?
+        ins_counts = [x[1] for x in results]
+        if ins_counts.count(ins_counts[0]) == len(ins_counts):
+            print("All ins counts are equal")
+            break
+
         mod_char = max(results,key=itemgetter(1))[0]
+        if args.verbose:
+            print("Choosing : {} : {}".format(mod_char, val))
         modified_input = mod_input(modified_input, val,  mod_char)
         print(modified_input)
 
-def solve_input_len(file_name, input_length, input_stdin):
+def solve_input_len(args):
+
+    file_name = args.File
+    input_length = args.inputCheckCount
+    input_stdin = args.stdin
 
     arch, is_little_endian= get_file_arch(file_name)
     qemu_binary = get_qemu_binary(arch, is_little_endian)
@@ -137,12 +188,17 @@ def main():
     parser.add_argument("-g", "--getLength", help="Get input length", default=False, action='store_true')
     parser.add_argument("-c", "--inputCheckCount", help="How much length to check", default=30, type=int)
 
+    parser.add_argument("--exec", help="Use exec qemu mode", default=False, action="store_true")
+    parser.add_argument("-v","--verbose",help="enable debug output",default=False, action="store_true")
+    parser.add_argument("--curr",help="Current input to start with")
+    parser.add_argument("--curr_iter",help="Skip to this value", type=int)
+
     args = parser.parse_args()
 
     if not args.getLength:
-        solve_ins_count(args.File, args.inputLength, args.reverse, args.stdin)
+        solve_ins_count(args)
     else:
-        solve_input_len(args.File, args.inputCheckCount, args.stdin)
+        solve_input_len(args)
 
 if __name__ == "__main__":
     main()
