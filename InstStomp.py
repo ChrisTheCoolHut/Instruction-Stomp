@@ -119,6 +119,13 @@ def solve_ins_count(args):
             mod_char = max(results,key=itemgetter(1))[0]
             if args.verbose:
                 print("Choosing : {} : {}".format(mod_char, val))
+            
+            mod_ins_count = [y for x,y in results if x == mod_char][0]
+
+            if ins_counts.count(mod_ins_count) > 1:
+                print("Selected character has same ins count as another")
+                break
+
             modified_input = mod_input(modified_input, val,  mod_char)
             print(modified_input)
     
@@ -148,6 +155,13 @@ def solve_ins_count(args):
         mod_char = max(results,key=itemgetter(1))[0]
         if args.verbose:
             print("Choosing : {} : {}".format(mod_char, val))
+        
+        mod_ins_count = [y for x,y in results if x == mod_char][0]
+
+        if ins_counts.count(mod_ins_count) > 1:
+            print("Selected character has same ins count as another")
+            break
+
         modified_input = mod_input(modified_input, val,  mod_char)
         print(modified_input)
 
