@@ -2,8 +2,8 @@ from celery import Celery
 
 app = Celery('CeleryTask')
 app.config_from_object('celeryconfig')
-#qemu_command = "{} -E LD_PRELOAD=/home/chris/projects/Instruction-Stomp/preload_libs/slow_memcmp.so_64 -d {} {} {} 2>&1 | wc -l"
-qemu_command = "{} -d {} {} {} 2>&1 | wc -l"
+qemu_command = "{} {} -d {} {} {} 2>&1 | wc -l"
+# qemu_command = "{} -d {} {} {} 2>&1 | wc -l"
 
 in_asm_mode = "in_asm,nochain"
 exec_mode = "exec,nochain"
@@ -11,19 +11,23 @@ import subprocess
 import shlex
 
 @app.task
-def run_qemu_command(qemu_binary, content, binary, character, stdin_input=True, asm_mode=True):
+def run_qemu_command(qemu_binary, content, binary, character, stdin_input=True, asm_mode=True, preload=None):
     ins_count = -1
 
     if asm_mode:
         mode = in_asm_mode
     else:
         mode = exec_mode
+    
+    preload_arg = ""
+    if preload:
+        preload_arg = " -E LD_PRELOAD={} ".format(preload)
 
     if stdin_input:
 
         content = str.encode(content)
         proc_command = qemu_command.format(
-                qemu_binary, mode, binary, "")
+                qemu_binary, preload_arg, mode, binary, "")
         print(proc_command)
 
         qemu_proc = subprocess.Popen(proc_command,
@@ -35,7 +39,7 @@ def run_qemu_command(qemu_binary, content, binary, character, stdin_input=True, 
         
     else:
         proc_command = qemu_command.format(
-                qemu_binary, mode, binary, content)
+                qemu_binary, preload_arg, mode, binary, content)
 
         qemu_proc = subprocess.Popen(proc_command, shell=True,
                 stdin=subprocess.PIPE,

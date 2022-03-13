@@ -8,4 +8,4 @@
 ./InstStomp.py --stdin -i 25 -r challenges/ELF-NoSoftwareBreakpoints
 
 #Run on binary with command line argument
-./InstStomp.py challenges/crypt4 -i 26 --arg
+./InstStomp.py challenges/crypt4 -i 26 --arg --exec

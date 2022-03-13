@@ -50,15 +50,20 @@ def make_input_file(file_name, contents):
     with open(file_name, 'w') as f:
         f.write(contents)
 
-def do_run(position, user_input, qemu_binary, binary, use_stdin=True, in_asm_mode=True):
+def do_run(position, user_input, qemu_binary, binary, use_stdin=True, in_asm_mode=True, preload=None, printable=False):
     async_group = []
-    for x in range(0x21,0x7E):
-        x = chr(x)
+    if printable:
+        iter_range = string.printable
+    else:
+        iter_range = range(0x21,0x7E)
+        iter_range = (chr(x) for x in iter_range)
+
+    for x in iter_range:
         input_test = mod_input(user_input, position, x)
         async_group.append(
                 run_qemu_command.delay(
                     qemu_binary, input_test,
-                    binary, x, use_stdin, in_asm_mode))
+                    binary, x, use_stdin, in_asm_mode, preload))
 
     bar = tqdm.tqdm(total=len(async_group), desc="[~] Running on position {}".format(position))
     while not all([x.ready() for x in async_group]):
@@ -80,6 +85,8 @@ def solve_ins_count(args):
     starting_input = "A"*input_length
     if args.curr:
         starting_input = args.curr
+    
+    # Setup range to run
     my_r = range(input_length)
     if input_rev:
          my_r = reversed(my_r)
@@ -97,7 +104,7 @@ def solve_ins_count(args):
         # First try qemu in_asm method
         for val in my_r:
 
-            results = do_run(val, modified_input, qemu_binary, file_name, input_stdin, True)
+            results = do_run(val, modified_input, qemu_binary, file_name, input_stdin, True, args.preload, args.printable)
 
             if args.verbose:
                 for res in results:
@@ -106,7 +113,7 @@ def solve_ins_count(args):
             # Are all the lengths the same?
             ins_counts = [x[1] for x in results]
             if ins_counts.count(ins_counts[0]) == len(ins_counts):
-                print("All ins counts are equal")
+                print("All ins counts are equal, swapping modes")
                 break
 
             mod_char = max(results,key=itemgetter(1))[0]
@@ -115,11 +122,18 @@ def solve_ins_count(args):
             modified_input = mod_input(modified_input, val,  mod_char)
             print(modified_input)
     
+    print("[~] Running QEMU exec mode")
+    my_r = range(input_length)
+    if input_rev:
+         my_r = reversed(my_r)
+
+    if args.curr_iter:
+        my_r = my_r[args.curr_iter:]
     modified_input = starting_input
     # Then try qemu exec method
     for val in my_r:
 
-        results = do_run(val, modified_input, qemu_binary, file_name, input_stdin, False)
+        results = do_run(val, modified_input, qemu_binary, file_name, input_stdin, False, args.preload, args.printable)
         
         if args.verbose:
             for res in results:
@@ -153,7 +167,7 @@ def solve_input_len(args):
         async_group.append(
                 run_qemu_command.delay(
                     qemu_binary, input_test,
-                    file_name, x, input_stdin))
+                    file_name, x, input_stdin, not args.exec, args.preload))
 
     bar = tqdm.tqdm(total=len(async_group), desc="[~] Running input length check")
     while not all([x.ready() for x in async_group]):
@@ -192,8 +206,16 @@ def main():
     parser.add_argument("-v","--verbose",help="enable debug output",default=False, action="store_true")
     parser.add_argument("--curr",help="Current input to start with")
     parser.add_argument("--curr_iter",help="Skip to this value", type=int)
+    parser.add_argument("--preload",help="Library to preload when running")
+    parser.add_argument("--printable",help="Try all printable characters instead of common characters", default=False, action="store_true")
 
     args = parser.parse_args()
+
+    if args.preload:
+        if not os.path.exists(args.preload):
+            print("Please give a valid path to a library")
+            exit(-1)
+        args.preload = os.path.abspath(args.preload)
 
     if not args.getLength:
         solve_ins_count(args)
